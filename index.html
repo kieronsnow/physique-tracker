@@ -79,6 +79,14 @@ button {
 
 <script>
 
+let phase = localStorage.getItem("phase") || "Cut";
+
+function togglePhase() {
+    phase = phase === "Cut" ? "Bulk" : "Cut";
+    localStorage.setItem("phase", phase);
+    document.getElementById("phaseDisplay").innerText = phase;
+}
+
 function saveEntry() {
     let weight = document.getElementById("weight").value;
     let waist = document.getElementById("waist").value;
@@ -89,16 +97,23 @@ function saveEntry() {
     let total = strength + recovery + adherence;
     let decision = "";
 
-    if (total >= 13) decision = "Perfect – Stay Course";
-    else if (total >= 10) decision = "Minor Adjustment";
-    else decision = "Review & Adjust Calories";
+    if (phase === "Cut") {
+        if (total >= 13) decision = "Perfect – Maintain Deficit";
+        else if (total >= 10) decision = "Slight Adjustment (-100 kcal)";
+        else decision = "Increase Deficit (-200 kcal)";
+    } else {
+        if (total >= 13) decision = "Perfect – Maintain Surplus";
+        else if (total >= 10) decision = "Small Increase (+100 kcal)";
+        else decision = "Reduce Surplus (-100 kcal)";
+    }
 
     let entry = {
         date: new Date().toLocaleDateString(),
         weight,
         waist,
         total,
-        decision
+        decision,
+        phase
     };
 
     let data = JSON.parse(localStorage.getItem("physiqueData")) || [];
@@ -106,7 +121,8 @@ function saveEntry() {
     localStorage.setItem("physiqueData", JSON.stringify(data));
 
     document.getElementById("decision").innerHTML =
-        "<strong>Total Score:</strong> " + total +
+        "<strong>Phase:</strong> " + phase +
+        "<br><strong>Total Score:</strong> " + total +
         "<br><strong>Decision:</strong> " + decision;
 
     renderHistory();
@@ -122,10 +138,14 @@ function renderHistory() {
             "<div class='entry'>" +
             entry.date +
             " | " +
-            entry.weight + "kg | " +
-            "Score: " + entry.total +
+            entry.phase +
+            " | " +
+            entry.weight + "kg | Score: " +
+            entry.total +
             "</div>";
     });
+
+    document.getElementById("phaseDisplay").innerText = phase;
 }
 
 renderHistory();
@@ -134,3 +154,8 @@ renderHistory();
 
 </body>
 </html>
+<h1>Physique Tracker</h1>
+<div class="card">
+<h3>Current Phase: <span id="phaseDisplay"></span></h3>
+<button onclick="togglePhase()">Toggle Phase</button>
+</div>
