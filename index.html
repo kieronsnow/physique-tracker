@@ -2,69 +2,24 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Physique Pro</title>
+<title>Physique Elite</title>
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-body {
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #000;
-    color: white;
-    padding: 20px;
-}
-h1 { text-align:center; font-weight:600; }
-
-.card {
-    background: #1c1c1e;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 14px;
-    transition: 0.3s;
-}
-.card:hover { transform: scale(1.01); }
-
-input, select {
-    width:100%;
-    padding:10px;
-    margin-bottom:10px;
-    border-radius:10px;
-    border:none;
-}
-
-button {
-    width:100%;
-    padding:12px;
-    border-radius:12px;
-    border:none;
-    background:#0a84ff;
-    color:white;
-    font-weight:600;
-    margin-bottom:8px;
-}
-
-.secondary { background:#2c2c2e; }
-
-.progress-bar {
-    height:10px;
-    background:#2c2c2e;
-    border-radius:10px;
-    overflow:hidden;
-}
-.progress-fill {
-    height:100%;
-    background:#0a84ff;
-    width:0%;
-}
-
-.entry { font-size:14px; opacity:0.9; margin-bottom:6px; }
-canvas { margin-top:10px; }
-</style>
 </head>
 
 <body>
 
-<h1>Physique Pro</h1>
+<h1>Physique Elite</h1>
+
+<div id="authSection" class="card">
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
+<button onclick="logout()" class="secondary">Logout</button>
+<div id="authStatus"></div>
+</div>
 
 <div class="card">
 <button onclick="show('dashboard')">Dashboard</button>
@@ -73,203 +28,43 @@ canvas { margin-top:10px; }
 </div>
 
 <div id="dashboard">
-
 <div class="card">
-<h3>Current Phase: <span id="phaseDisplay"></span></h3>
-<button onclick="togglePhase()">Toggle Phase</button>
-</div>
-
-<div class="card">
-<h3>Progress</h3>
-<div class="progress-bar">
-<div class="progress-fill" id="phaseProgress"></div>
-</div>
-<p id="rateInfo"></p>
-<p id="projection"></p>
-</div>
-
-<div class="card">
-<h3>Weight Trend (7 Day Avg)</h3>
+<h3>Weight Trend</h3>
+<p id="weeklyRate"></p>
 <canvas id="weightChart"></canvas>
 </div>
-
-</div>
-
-<div id="checkin" style="display:none;">
-
-<div class="card">
-<input type="number" id="weight" placeholder="Weight (kg)">
-<input type="number" id="waist" placeholder="Waist (cm)">
-<input type="number" id="bodyfat" placeholder="Bodyfat %">
-
-<select id="strength"><option>Strength 1-5</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-<select id="recovery"><option>Recovery 1-5</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-<select id="adherence"><option>Adherence 1-5</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-
-<button onclick="saveCheckin()">Save Check-In</button>
-<div id="decision"></div>
-</div>
-
-</div>
-
-<div id="workout" style="display:none;">
-
-<div class="card">
-<input type="text" id="exercise" placeholder="Exercise">
-<input type="number" id="liftWeight" placeholder="Weight (kg)">
-<input type="number" id="reps" placeholder="Reps">
-<input type="number" id="sets" placeholder="Sets">
-<button onclick="saveWorkout()">Save Workout</button>
-<div id="prMessage"></div>
-</div>
-
 <div class="card">
 <h3>Top Lifts</h3>
 <div id="liftSummary"></div>
 </div>
-
 </div>
 
+<div id="checkin" style="display:none;">
 <div class="card">
-<button onclick="exportCSV()">Export All Data</button>
-<button onclick="resetData()" class="secondary">Reset All Data</button>
+<input type="number" id="weight" placeholder="Weight (kg)">
+<select id="phase">
+<option value="cut">Cut</option>
+<option value="bulk">Bulk</option>
+</select>
+<button onclick="saveCheckin()">Save</button>
+</div>
 </div>
 
-<script>
+<div id="workout" style="display:none;">
+<div class="card">
+<input type="text" id="exercise" placeholder="Exercise">
+<input type="number" id="liftWeight" placeholder="Weight (kg)">
+<input type="number" id="reps" placeholder="Reps">
+<button onclick="saveWorkout()">Save</button>
+</div>
+</div>
 
-let phase = localStorage.getItem("phase") || "Cut";
-let chart;
-
-function show(screen){
-    document.getElementById("dashboard").style.display="none";
-    document.getElementById("checkin").style.display="none";
-    document.getElementById("workout").style.display="none";
-    document.getElementById(screen).style.display="block";
-}
-
-function togglePhase(){
-    phase = phase==="Cut"?"Bulk":"Cut";
-    localStorage.setItem("phase",phase);
-    updateDashboard();
-}
-
-function saveCheckin(){
-
-    let weight=parseFloat(weight.value);
-    let waist=parseFloat(waist.value);
-    let bf=parseFloat(bodyfat.value);
-    let total=parseInt(strength.value||0)+parseInt(recovery.value||0)+parseInt(adherence.value||0);
-
-    let data=JSON.parse(localStorage.getItem("checkins")||"[]");
-
-    let decision="Maintain";
-    if(total<=9) decision=phase==="Cut"?"-200 kcal":"-100 kcal";
-    else if(total<=12) decision=phase==="Cut"?"-100 kcal":"+100 kcal";
-
-    data.push({date:Date.now(),weight,waist,bf,total,phase});
-    localStorage.setItem("checkins",JSON.stringify(data));
-
-    decision.innerHTML="Score: "+total+" | "+decision;
-    updateDashboard();
-}
-
-function saveWorkout(){
-
-    let ex=exercise.value;
-    let w=parseFloat(liftWeight.value);
-    let r=parseInt(reps.value);
-    let s=parseInt(sets.value);
-    let est=Math.round(w*(1+r/30));
-
-    let workouts=JSON.parse(localStorage.getItem("workouts")||"[]");
-    let isPR=true;
-
-    workouts.forEach(x=>{
-        if(x.exercise===ex && x.est>=est) isPR=false;
-    });
-
-    workouts.push({date:Date.now(),exercise:ex,est});
-    localStorage.setItem("workouts",JSON.stringify(workouts));
-
-    prMessage.innerHTML=isPR?"🏆 New PR":"";
-    updateLifts();
-}
-
-function movingAverage(arr,window=7){
-    return arr.map((_,i,arr)=>{
-        let start=Math.max(0,i-window+1);
-        let subset=arr.slice(start,i+1);
-        return subset.reduce((a,b)=>a+b)/subset.length;
-    });
-}
-
-function updateDashboard(){
-
-    phaseDisplay.innerText=phase;
-
-    let data=JSON.parse(localStorage.getItem("checkins")||"[]");
-    if(data.length<2) return;
-
-    let weights=data.map(x=>x.weight);
-    let avg=movingAverage(weights);
-
-    let weeklyRate=(weights[weights.length-1]-weights[0])/(weights.length/7);
-    rateInfo.innerText="Weekly Rate: "+weeklyRate.toFixed(2)+" kg/week";
-
-    let goal=phase==="Cut"?weights[weights.length-1]-5:weights[weights.length-1]+5;
-    let weeks=Math.abs((goal-weights[weights.length-1])/weeklyRate);
-    projection.innerText="Projected 5kg goal: "+weeks.toFixed(1)+" weeks";
-
-    let progress=Math.min(100,Math.abs(weeklyRate)*20);
-    phaseProgress.style.width=progress+"%";
-
-    if(chart) chart.destroy();
-    chart=new Chart(weightChart,{
-        type:"line",
-        data:{labels:weights.map((_,i)=>i+1),
-        datasets:[{data:avg,borderColor:"#0a84ff",fill:false}]},
-        options:{plugins:{legend:{display:false}},
-        scales:{x:{display:false}}}
-    });
-
-    updateLifts();
-}
-
-function updateLifts(){
-    let workouts=JSON.parse(localStorage.getItem("workouts")||"[]");
-    let best={};
-    workouts.forEach(w=>{
-        if(!best[w.exercise]||best[w.exercise]<w.est)
-            best[w.exercise]=w.est;
-    });
-    liftSummary.innerHTML="";
-    for(let k in best)
-        liftSummary.innerHTML+=`<div class='entry'>${k}: ${best[k]}kg</div>`;
-}
-
-function exportCSV(){
-    let checkins=JSON.parse(localStorage.getItem("checkins")||"[]");
-    let workouts=JSON.parse(localStorage.getItem("workouts")||"[]");
-    let rows=["TYPE,DATE,DATA"];
-    checkins.forEach(c=>rows.push(`Checkin,${new Date(c.date).toLocaleDateString()},${c.weight}kg`));
-    workouts.forEach(w=>rows.push(`Workout,${new Date(w.date).toLocaleDateString()},${w.exercise} ${w.est}kg`));
-    let blob=new Blob([rows.join("\n")],{type:"text/csv"});
-    let a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="physique_data.csv";
-    a.click();
-}
-
-function resetData(){
-    if(confirm("Delete all data?")){
-        localStorage.clear();
-        location.reload();
-    }
-}
-
-updateDashboard();
-
-</script>
+<script type="module" src="js/firebase.js"></script>
+<script type="module" src="js/auth.js"></script>
+<script type="module" src="js/checkins.js"></script>
+<script type="module" src="js/workouts.js"></script>
+<script type="module" src="js/analytics.js"></script>
+<script type="module" src="js/ui.js"></script>
 
 </body>
 </html>
