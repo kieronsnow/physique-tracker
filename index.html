@@ -2,6 +2,10 @@
 <html>
     <h1>Physique Tracker</h1>
     <div class="card">
+<button onclick="showScreen('checkin')">Check-In</button>
+<button onclick="showScreen('workout')">Workout Log</button>
+</div>
+    <div class="card">
 <h3>Current Phase: <span id="phaseDisplay"></span></h3>
 <button onclick="togglePhase()">Toggle Phase</button>
 </div>
@@ -50,7 +54,12 @@ button {
 <body>
 
 <h1>Physique Tracker</h1>
-
+    <div class="card">
+<button onclick="showScreen('checkin')">Check-In</button>
+<button onclick="showScreen('workout')">Workout Log</button>
+</div>
+    
+<div id="checkinScreen">
 <div class="card">
 <label>Weight (kg)</label>
 <input type="number" id="weight">
@@ -83,6 +92,54 @@ button {
 </div>
 
 <script>
+
+    function showScreen(screen) {
+    document.getElementById("checkinScreen").style.display =
+        screen === "checkin" ? "block" : "none";
+
+    document.getElementById("workoutScreen").style.display =
+        screen === "workout" ? "block" : "none";
+}
+
+function saveWorkout() {
+    let exercise = document.getElementById("exercise").value;
+    let weight = document.getElementById("liftWeight").value;
+    let reps = document.getElementById("reps").value;
+    let rir = document.getElementById("rir").value;
+
+    let entry = {
+        date: new Date().toLocaleDateString(),
+        exercise,
+        weight,
+        reps,
+        rir
+    };
+
+    let workouts = JSON.parse(localStorage.getItem("workoutData")) || [];
+    workouts.unshift(entry);
+    localStorage.setItem("workoutData", JSON.stringify(workouts));
+
+    renderWorkouts();
+}
+
+function renderWorkouts() {
+    let workouts = JSON.parse(localStorage.getItem("workoutData")) || [];
+    let container = document.getElementById("workoutHistory");
+    container.innerHTML = "";
+
+    workouts.forEach(w => {
+        container.innerHTML +=
+            "<div class='entry'>" +
+            w.date + " | " +
+            w.exercise + " | " +
+            w.weight + "kg x " +
+            w.reps + " (RIR " +
+            w.rir + ")" +
+            "</div>";
+    });
+}
+
+renderWorkouts();
 
 let phase = localStorage.getItem("phase") || "Cut";
 
@@ -155,12 +212,35 @@ function renderHistory() {
 
 renderHistory();
 
+</div>
+
+    <div id="workoutScreen" style="display:none;">
+
+<div class="card">
+<h3>Log Workout</h3>
+
+<label>Exercise</label>
+<input type="text" id="exercise">
+
+<label>Weight (kg)</label>
+<input type="number" id="liftWeight">
+
+<label>Reps</label>
+<input type="number" id="reps">
+
+<label>RIR</label>
+<input type="number" id="rir">
+
+<button onclick="saveWorkout()">Save Workout</button>
+</div>
+
+<div class="card">
+<h3>Workout History</h3>
+<div id="workoutHistory"></div>
+</div>
+
+</div>
+    
 </script>
 
-</body>
-</html>
-<h1>Physique Tracker</h1>
-<div class="card">
-<h3>Current Phase: <span id="phaseDisplay"></span></h3>
-<button onclick="togglePhase()">Toggle Phase</button>
-</div>
+
