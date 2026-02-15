@@ -1,17 +1,9 @@
 <!DOCTYPE html>
 <html>
-    <h1>Physique Tracker</h1>
-    <div class="card">
-<button onclick="showScreen('checkin')">Check-In</button>
-<button onclick="showScreen('workout')">Workout Log</button>
-</div>
-    <div class="card">
-<h3>Current Phase: <span id="phaseDisplay"></span></h3>
-<button onclick="togglePhase()">Toggle Phase</button>
-</div>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Physique Tracker</title>
+
 <style>
 body {
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -44,23 +36,39 @@ button {
     background: #0a84ff;
     color: white;
     font-weight: bold;
+    margin-bottom: 8px;
 }
 .entry {
     font-size: 14px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    opacity: 0.9;
+}
+.small-btn {
+    background: #2c2c2e;
 }
 </style>
 </head>
+
 <body>
 
 <h1>Physique Tracker</h1>
-    <div class="card">
-<button onclick="showScreen('checkin')">Check-In</button>
-<button onclick="showScreen('workout')">Workout Log</button>
-</div>
-    
-<div id="checkinScreen">
+
 <div class="card">
+<button onclick="showScreen('checkin')">Check-In</button>
+<button onclick="showScreen('workout')" class="small-btn">Workout Log</button>
+</div>
+
+<!-- PHASE CONTROL -->
+<div class="card">
+<h3>Current Phase: <span id="phaseDisplay"></span></h3>
+<button onclick="togglePhase()">Toggle Phase</button>
+</div>
+
+<!-- CHECK-IN SCREEN -->
+<div id="checkinScreen">
+
+<div class="card">
+
 <label>Weight (kg)</label>
 <input type="number" id="weight">
 
@@ -82,64 +90,49 @@ button {
 <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
 </select>
 
-<button onclick="saveEntry()">Save Check-In</button>
+<button onclick="saveCheckin()">Save Check-In</button>
+
 <div id="decision"></div>
+
 </div>
 
 <div class="card">
-<h3>History</h3>
+<h3>Check-In History</h3>
 <div id="history"></div>
 </div>
 
+</div>
+
+<!-- WORKOUT SCREEN -->
+<div id="workoutScreen" style="display:none;">
+
+<div class="card">
+<h3>Log Workout</h3>
+
+<label>Exercise</label>
+<input type="text" id="exercise">
+
+<label>Weight (kg)</label>
+<input type="number" id="liftWeight">
+
+<label>Reps</label>
+<input type="number" id="reps">
+
+<label>RIR</label>
+<input type="number" id="rir">
+
+<button onclick="saveWorkout()">Save Workout</button>
+
+</div>
+
+<div class="card">
+<h3>Workout History</h3>
+<div id="workoutHistory"></div>
+</div>
+
+</div>
+
 <script>
-
-    function showScreen(screen) {
-    document.getElementById("checkinScreen").style.display =
-        screen === "checkin" ? "block" : "none";
-
-    document.getElementById("workoutScreen").style.display =
-        screen === "workout" ? "block" : "none";
-}
-
-function saveWorkout() {
-    let exercise = document.getElementById("exercise").value;
-    let weight = document.getElementById("liftWeight").value;
-    let reps = document.getElementById("reps").value;
-    let rir = document.getElementById("rir").value;
-
-    let entry = {
-        date: new Date().toLocaleDateString(),
-        exercise,
-        weight,
-        reps,
-        rir
-    };
-
-    let workouts = JSON.parse(localStorage.getItem("workoutData")) || [];
-    workouts.unshift(entry);
-    localStorage.setItem("workoutData", JSON.stringify(workouts));
-
-    renderWorkouts();
-}
-
-function renderWorkouts() {
-    let workouts = JSON.parse(localStorage.getItem("workoutData")) || [];
-    let container = document.getElementById("workoutHistory");
-    container.innerHTML = "";
-
-    workouts.forEach(w => {
-        container.innerHTML +=
-            "<div class='entry'>" +
-            w.date + " | " +
-            w.exercise + " | " +
-            w.weight + "kg x " +
-            w.reps + " (RIR " +
-            w.rir + ")" +
-            "</div>";
-    });
-}
-
-renderWorkouts();
 
 let phase = localStorage.getItem("phase") || "Cut";
 
@@ -149,7 +142,16 @@ function togglePhase() {
     document.getElementById("phaseDisplay").innerText = phase;
 }
 
-function saveEntry() {
+function showScreen(screen) {
+    document.getElementById("checkinScreen").style.display =
+        screen === "checkin" ? "block" : "none";
+
+    document.getElementById("workoutScreen").style.display =
+        screen === "workout" ? "block" : "none";
+}
+
+function saveCheckin() {
+
     let weight = document.getElementById("weight").value;
     let waist = document.getElementById("waist").value;
     let strength = parseInt(document.getElementById("strength").value);
@@ -198,10 +200,8 @@ function renderHistory() {
     data.forEach(entry => {
         historyDiv.innerHTML +=
             "<div class='entry'>" +
-            entry.date +
-            " | " +
-            entry.phase +
-            " | " +
+            entry.date + " | " +
+            entry.phase + " | " +
             entry.weight + "kg | Score: " +
             entry.total +
             "</div>";
@@ -210,45 +210,8 @@ function renderHistory() {
     document.getElementById("phaseDisplay").innerText = phase;
 }
 
-renderHistory();
-
-</div>
-
-    <div id="workoutScreen" style="display:none;">
-
-<div class="card">
-<h3>Log Workout</h3>
-
-<label>Exercise</label>
-<input type="text" id="exercise">
-
-<label>Weight (kg)</label>
-<input type="number" id="liftWeight">
-
-<label>Reps</label>
-<input type="number" id="reps">
-
-<label>RIR</label>
-<input type="number" id="rir">
-
-<button onclick="saveWorkout()">Save Workout</button>
-</div>
-
-<div class="card">
-<h3>Workout History</h3>
-<div id="workoutHistory"></div>
-</div>
-
-</div>
-  function showScreen(screen) {
-    document.getElementById("checkinScreen").style.display =
-        screen === "checkin" ? "block" : "none";
-
-    document.getElementById("workoutScreen").style.display =
-        screen === "workout" ? "block" : "none";
-}
-
 function saveWorkout() {
+
     let exercise = document.getElementById("exercise").value;
     let weight = document.getElementById("liftWeight").value;
     let reps = document.getElementById("reps").value;
@@ -286,7 +249,10 @@ function renderWorkouts() {
     });
 }
 
-renderWorkouts();  
+renderHistory();
+renderWorkouts();
+
 </script>
 
-
+</body>
+</html>
