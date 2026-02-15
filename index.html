@@ -2,255 +2,272 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Physique Tracker</title>
+<title>Physique Pro</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #111;
+    background: #000;
     color: white;
     padding: 20px;
 }
-h1 {
-    text-align: center;
-}
+h1 { text-align:center; font-weight:600; }
+
 .card {
     background: #1c1c1e;
     padding: 15px;
     margin-bottom: 15px;
-    border-radius: 12px;
+    border-radius: 14px;
+    transition: 0.3s;
 }
+.card:hover { transform: scale(1.01); }
+
 input, select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    margin-bottom: 10px;
-    border-radius: 8px;
-    border: none;
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:10px;
+    border:none;
 }
+
 button {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    background: #0a84ff;
-    color: white;
-    font-weight: bold;
-    margin-bottom: 8px;
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    background:#0a84ff;
+    color:white;
+    font-weight:600;
+    margin-bottom:8px;
 }
-.entry {
-    font-size: 14px;
-    margin-bottom: 6px;
-    opacity: 0.9;
+
+.secondary { background:#2c2c2e; }
+
+.progress-bar {
+    height:10px;
+    background:#2c2c2e;
+    border-radius:10px;
+    overflow:hidden;
 }
-.small-btn {
-    background: #2c2c2e;
+.progress-fill {
+    height:100%;
+    background:#0a84ff;
+    width:0%;
 }
+
+.entry { font-size:14px; opacity:0.9; margin-bottom:6px; }
+canvas { margin-top:10px; }
 </style>
 </head>
 
 <body>
 
-<h1>Physique Tracker</h1>
+<h1>Physique Pro</h1>
 
 <div class="card">
-<button onclick="showScreen('checkin')">Check-In</button>
-<button onclick="showScreen('workout')" class="small-btn">Workout Log</button>
+<button onclick="show('dashboard')">Dashboard</button>
+<button onclick="show('checkin')" class="secondary">Check-In</button>
+<button onclick="show('workout')" class="secondary">Workout</button>
 </div>
 
-<!-- PHASE CONTROL -->
+<div id="dashboard">
+
 <div class="card">
 <h3>Current Phase: <span id="phaseDisplay"></span></h3>
 <button onclick="togglePhase()">Toggle Phase</button>
 </div>
 
-<!-- CHECK-IN SCREEN -->
-<div id="checkinScreen">
+<div class="card">
+<h3>Progress</h3>
+<div class="progress-bar">
+<div class="progress-fill" id="phaseProgress"></div>
+</div>
+<p id="rateInfo"></p>
+<p id="projection"></p>
+</div>
 
 <div class="card">
+<h3>Weight Trend (7 Day Avg)</h3>
+<canvas id="weightChart"></canvas>
+</div>
 
-<label>Weight (kg)</label>
-<input type="number" id="weight">
+</div>
 
-<label>Waist (cm)</label>
-<input type="number" id="waist">
+<div id="checkin" style="display:none;">
 
-<label>Strength (1–5)</label>
-<select id="strength">
-<option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-</select>
+<div class="card">
+<input type="number" id="weight" placeholder="Weight (kg)">
+<input type="number" id="waist" placeholder="Waist (cm)">
+<input type="number" id="bodyfat" placeholder="Bodyfat %">
 
-<label>Recovery (1–5)</label>
-<select id="recovery">
-<option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-</select>
-
-<label>Adherence (1–5)</label>
-<select id="adherence">
-<option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-</select>
+<select id="strength"><option>Strength 1-5</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<select id="recovery"><option>Recovery 1-5</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+<select id="adherence"><option>Adherence 1-5</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
 
 <button onclick="saveCheckin()">Save Check-In</button>
-
 <div id="decision"></div>
+</div>
 
 </div>
+
+<div id="workout" style="display:none;">
 
 <div class="card">
-<h3>Check-In History</h3>
-<div id="history"></div>
-</div>
-
-</div>
-
-<!-- WORKOUT SCREEN -->
-<div id="workoutScreen" style="display:none;">
-
-<div class="card">
-<h3>Log Workout</h3>
-
-<label>Exercise</label>
-<input type="text" id="exercise">
-
-<label>Weight (kg)</label>
-<input type="number" id="liftWeight">
-
-<label>Reps</label>
-<input type="number" id="reps">
-
-<label>RIR</label>
-<input type="number" id="rir">
-
+<input type="text" id="exercise" placeholder="Exercise">
+<input type="number" id="liftWeight" placeholder="Weight (kg)">
+<input type="number" id="reps" placeholder="Reps">
+<input type="number" id="sets" placeholder="Sets">
 <button onclick="saveWorkout()">Save Workout</button>
+<div id="prMessage"></div>
+</div>
+
+<div class="card">
+<h3>Top Lifts</h3>
+<div id="liftSummary"></div>
+</div>
 
 </div>
 
 <div class="card">
-<h3>Workout History</h3>
-<div id="workoutHistory"></div>
-</div>
-
+<button onclick="exportCSV()">Export All Data</button>
+<button onclick="resetData()" class="secondary">Reset All Data</button>
 </div>
 
 <script>
 
 let phase = localStorage.getItem("phase") || "Cut";
+let chart;
 
-function togglePhase() {
-    phase = phase === "Cut" ? "Bulk" : "Cut";
-    localStorage.setItem("phase", phase);
-    document.getElementById("phaseDisplay").innerText = phase;
+function show(screen){
+    document.getElementById("dashboard").style.display="none";
+    document.getElementById("checkin").style.display="none";
+    document.getElementById("workout").style.display="none";
+    document.getElementById(screen).style.display="block";
 }
 
-function showScreen(screen) {
-    document.getElementById("checkinScreen").style.display =
-        screen === "checkin" ? "block" : "none";
-
-    document.getElementById("workoutScreen").style.display =
-        screen === "workout" ? "block" : "none";
+function togglePhase(){
+    phase = phase==="Cut"?"Bulk":"Cut";
+    localStorage.setItem("phase",phase);
+    updateDashboard();
 }
 
-function saveCheckin() {
+function saveCheckin(){
 
-    let weight = document.getElementById("weight").value;
-    let waist = document.getElementById("waist").value;
-    let strength = parseInt(document.getElementById("strength").value);
-    let recovery = parseInt(document.getElementById("recovery").value);
-    let adherence = parseInt(document.getElementById("adherence").value);
+    let weight=parseFloat(weight.value);
+    let waist=parseFloat(waist.value);
+    let bf=parseFloat(bodyfat.value);
+    let total=parseInt(strength.value||0)+parseInt(recovery.value||0)+parseInt(adherence.value||0);
 
-    let total = strength + recovery + adherence;
-    let decision = "";
+    let data=JSON.parse(localStorage.getItem("checkins")||"[]");
 
-    if (phase === "Cut") {
-        if (total >= 13) decision = "Perfect – Maintain Deficit";
-        else if (total >= 10) decision = "Slight Adjustment (-100 kcal)";
-        else decision = "Increase Deficit (-200 kcal)";
-    } else {
-        if (total >= 13) decision = "Perfect – Maintain Surplus";
-        else if (total >= 10) decision = "Small Increase (+100 kcal)";
-        else decision = "Reduce Surplus (-100 kcal)";
+    let decision="Maintain";
+    if(total<=9) decision=phase==="Cut"?"-200 kcal":"-100 kcal";
+    else if(total<=12) decision=phase==="Cut"?"-100 kcal":"+100 kcal";
+
+    data.push({date:Date.now(),weight,waist,bf,total,phase});
+    localStorage.setItem("checkins",JSON.stringify(data));
+
+    decision.innerHTML="Score: "+total+" | "+decision;
+    updateDashboard();
+}
+
+function saveWorkout(){
+
+    let ex=exercise.value;
+    let w=parseFloat(liftWeight.value);
+    let r=parseInt(reps.value);
+    let s=parseInt(sets.value);
+    let est=Math.round(w*(1+r/30));
+
+    let workouts=JSON.parse(localStorage.getItem("workouts")||"[]");
+    let isPR=true;
+
+    workouts.forEach(x=>{
+        if(x.exercise===ex && x.est>=est) isPR=false;
+    });
+
+    workouts.push({date:Date.now(),exercise:ex,est});
+    localStorage.setItem("workouts",JSON.stringify(workouts));
+
+    prMessage.innerHTML=isPR?"🏆 New PR":"";
+    updateLifts();
+}
+
+function movingAverage(arr,window=7){
+    return arr.map((_,i,arr)=>{
+        let start=Math.max(0,i-window+1);
+        let subset=arr.slice(start,i+1);
+        return subset.reduce((a,b)=>a+b)/subset.length;
+    });
+}
+
+function updateDashboard(){
+
+    phaseDisplay.innerText=phase;
+
+    let data=JSON.parse(localStorage.getItem("checkins")||"[]");
+    if(data.length<2) return;
+
+    let weights=data.map(x=>x.weight);
+    let avg=movingAverage(weights);
+
+    let weeklyRate=(weights[weights.length-1]-weights[0])/(weights.length/7);
+    rateInfo.innerText="Weekly Rate: "+weeklyRate.toFixed(2)+" kg/week";
+
+    let goal=phase==="Cut"?weights[weights.length-1]-5:weights[weights.length-1]+5;
+    let weeks=Math.abs((goal-weights[weights.length-1])/weeklyRate);
+    projection.innerText="Projected 5kg goal: "+weeks.toFixed(1)+" weeks";
+
+    let progress=Math.min(100,Math.abs(weeklyRate)*20);
+    phaseProgress.style.width=progress+"%";
+
+    if(chart) chart.destroy();
+    chart=new Chart(weightChart,{
+        type:"line",
+        data:{labels:weights.map((_,i)=>i+1),
+        datasets:[{data:avg,borderColor:"#0a84ff",fill:false}]},
+        options:{plugins:{legend:{display:false}},
+        scales:{x:{display:false}}}
+    });
+
+    updateLifts();
+}
+
+function updateLifts(){
+    let workouts=JSON.parse(localStorage.getItem("workouts")||"[]");
+    let best={};
+    workouts.forEach(w=>{
+        if(!best[w.exercise]||best[w.exercise]<w.est)
+            best[w.exercise]=w.est;
+    });
+    liftSummary.innerHTML="";
+    for(let k in best)
+        liftSummary.innerHTML+=`<div class='entry'>${k}: ${best[k]}kg</div>`;
+}
+
+function exportCSV(){
+    let checkins=JSON.parse(localStorage.getItem("checkins")||"[]");
+    let workouts=JSON.parse(localStorage.getItem("workouts")||"[]");
+    let rows=["TYPE,DATE,DATA"];
+    checkins.forEach(c=>rows.push(`Checkin,${new Date(c.date).toLocaleDateString()},${c.weight}kg`));
+    workouts.forEach(w=>rows.push(`Workout,${new Date(w.date).toLocaleDateString()},${w.exercise} ${w.est}kg`));
+    let blob=new Blob([rows.join("\n")],{type:"text/csv"});
+    let a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="physique_data.csv";
+    a.click();
+}
+
+function resetData(){
+    if(confirm("Delete all data?")){
+        localStorage.clear();
+        location.reload();
     }
-
-    let entry = {
-        date: new Date().toLocaleDateString(),
-        weight,
-        waist,
-        total,
-        decision,
-        phase
-    };
-
-    let data = JSON.parse(localStorage.getItem("physiqueData")) || [];
-    data.unshift(entry);
-    localStorage.setItem("physiqueData", JSON.stringify(data));
-
-    document.getElementById("decision").innerHTML =
-        "<strong>Phase:</strong> " + phase +
-        "<br><strong>Total Score:</strong> " + total +
-        "<br><strong>Decision:</strong> " + decision;
-
-    renderHistory();
 }
 
-function renderHistory() {
-    let data = JSON.parse(localStorage.getItem("physiqueData")) || [];
-    let historyDiv = document.getElementById("history");
-    historyDiv.innerHTML = "";
-
-    data.forEach(entry => {
-        historyDiv.innerHTML +=
-            "<div class='entry'>" +
-            entry.date + " | " +
-            entry.phase + " | " +
-            entry.weight + "kg | Score: " +
-            entry.total +
-            "</div>";
-    });
-
-    document.getElementById("phaseDisplay").innerText = phase;
-}
-
-function saveWorkout() {
-
-    let exercise = document.getElementById("exercise").value;
-    let weight = document.getElementById("liftWeight").value;
-    let reps = document.getElementById("reps").value;
-    let rir = document.getElementById("rir").value;
-
-    let entry = {
-        date: new Date().toLocaleDateString(),
-        exercise,
-        weight,
-        reps,
-        rir
-    };
-
-    let workouts = JSON.parse(localStorage.getItem("workoutData")) || [];
-    workouts.unshift(entry);
-    localStorage.setItem("workoutData", JSON.stringify(workouts));
-
-    renderWorkouts();
-}
-
-function renderWorkouts() {
-    let workouts = JSON.parse(localStorage.getItem("workoutData")) || [];
-    let container = document.getElementById("workoutHistory");
-    container.innerHTML = "";
-
-    workouts.forEach(w => {
-        container.innerHTML +=
-            "<div class='entry'>" +
-            w.date + " | " +
-            w.exercise + " | " +
-            w.weight + "kg x " +
-            w.reps + " (RIR " +
-            w.rir + ")" +
-            "</div>";
-    });
-}
-
-renderHistory();
-renderWorkouts();
+updateDashboard();
 
 </script>
 
