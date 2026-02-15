@@ -240,7 +240,53 @@ renderHistory();
 </div>
 
 </div>
-    
+  function showScreen(screen) {
+    document.getElementById("checkinScreen").style.display =
+        screen === "checkin" ? "block" : "none";
+
+    document.getElementById("workoutScreen").style.display =
+        screen === "workout" ? "block" : "none";
+}
+
+function saveWorkout() {
+    let exercise = document.getElementById("exercise").value;
+    let weight = document.getElementById("liftWeight").value;
+    let reps = document.getElementById("reps").value;
+    let rir = document.getElementById("rir").value;
+
+    let entry = {
+        date: new Date().toLocaleDateString(),
+        exercise,
+        weight,
+        reps,
+        rir
+    };
+
+    let workouts = JSON.parse(localStorage.getItem("workoutData")) || [];
+    workouts.unshift(entry);
+    localStorage.setItem("workoutData", JSON.stringify(workouts));
+
+    renderWorkouts();
+}
+
+function renderWorkouts() {
+    let workouts = JSON.parse(localStorage.getItem("workoutData")) || [];
+    let container = document.getElementById("workoutHistory");
+    container.innerHTML = "";
+
+    workouts.forEach(w => {
+        container.innerHTML +=
+            "<div class='entry'>" +
+            w.date + " | " +
+            w.exercise + " | " +
+            w.weight + "kg x " +
+            w.reps + " (RIR " +
+            w.rir + ")" +
+            "</div>";
+    });
+}
+
+renderWorkouts();  
 </script>
 
 
